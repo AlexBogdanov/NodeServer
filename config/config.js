@@ -1,6 +1,6 @@
 const config = {
     secret: 'tercesym',
-    dbPath: 'mongodb://localhost:27017/demo-server',
+    dbPath: 'mongodb://localhost:27017/star-wars-db',
     port: 8080
 };
 
