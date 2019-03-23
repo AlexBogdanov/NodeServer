@@ -56,7 +56,7 @@ passport.use('local', new localStrategy({
 passport.use('jwt', new JWTstrategy(opts, (jwt_payload, done) => {
     try {
         User.findOne({
-                username: jwt_payload.id
+                username: jwt_payload.username
             })
             .then(user => {
                 if (user) {

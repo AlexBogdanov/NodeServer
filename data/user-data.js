@@ -47,7 +47,7 @@ const userData = {
                 throw new Error(notifMsgs.errors.INVALID_PASSWORD);
             }
 
-            const token = jwt.sign({ if: user.username }, secret);
+            const token = jwt.sign({ username: user.username }, secret);
             return { user, token, msg: notifMsgs.success.SUCCESSFULL_LOGIN };
         } catch (err) {
             console.log(err);
