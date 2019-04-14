@@ -2,7 +2,9 @@ const cloneOnly = (obj, properties) => {
     const newObj = {};
 
     properties.forEach(property => {
-        newObj[property] = obj[property];
+        if (property in obj) {
+            newObj[property] = obj[property];
+        }
     });
 
     return newObj;
