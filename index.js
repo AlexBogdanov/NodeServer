@@ -4,23 +4,34 @@ const bodyParse = require('body-parser');
 const logger = require('morgan');
 const passport = require('passport');
 const jsender = require('jsender');
+const cookieParser = require('cookie-parser');
+const nconf = require('nconf');
 
-const config = require('./config/config');
-require('./config/mongoDB')(config);
+nconf.argv()
+    .env()
+    // Add configuration file in your root directory
+    .file({ file: './config.json' });
+require('./config/mongoDB')(nconf.get('dbPath'));
 
 const app = express();
 app.use(jsender());
-
-require('./config/passport');
-
-app.use(Cors());
+app.use(Cors({
+    origin: nconf.get('corsOrigins'),
+    credentials: true
+}));
 app.use(bodyParse.urlencoded({ extended: false }));
 app.use(bodyParse.json());
+app.use(cookieParser());
 app.use(logger('dev'));
+
+const passportSecret = nconf.get('passportSecret');
+require('./config/passport')(passportSecret);
 app.use(passport.initialize());
 
-require('./routers/index')(app);
+const controllers = require('./controllers')({ secret: passportSecret });
+require('./routers/index')(app, controllers);
 
-app.listen(config.port, () => console.log(`Listening on port ${config.port}`));
+const port = nconf.get('port');
+app.listen(port, () => console.log(`Listening on port ${port}`));
 
 module.exports = app;

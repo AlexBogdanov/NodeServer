@@ -4,78 +4,67 @@ const localStrategy = require('passport-local');
 const JWTstrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
 
-const {
-    secret
-} = require('./config');
 const User = require('./../models/User');
+const notificationMessages = require('./../constants/notificationMessages');
 
-const BCRYPT_SALT_ROUNDS = 12;
+const passportInit = (secret) => {
+    const opts = {
+        jwtFromRequest: ExtractJWT.fromAuthHeaderWithScheme('JWT'),
+        secretOrKey: secret
+    };
+    
+    passport.use('local', new localStrategy(
+        {
+            usernameField: 'username',
+            passwordField: 'password',
+            session: false
+        },
+        async (username, password, done) => {
+            try {
+                const user = User.findOne({ username });
+                if (!user) {
+                    console.error(notificationMessages.errors.INVALID_USERNAME);
+                    done(null, false, { message: notificationMessages.errors.INVALID_USERNAME });
+                    return;
+                }
 
-const opts = {
-    jwtFromRequest: ExtractJWT.fromAuthHeaderWithScheme('JWT'),
-    secretOrKey: secret
-};
+                const response = bcrypt.compare(password, user.password);
+                if (!response) {
+                    console.error(notificationMessages.errors.INVALID_PASSWORD);
+                    done(null, false, { message: notificationMessages.errors.INVALID_PASSWORD });
+                    return;
+                }
 
-passport.use('local', new localStrategy({
-        usernameField: 'username',
-        passwordField: 'password',
-        session: false
-    },
-    (username, password, done) => {
+                done(null, user);
+            } catch (err) {
+                done(err);
+            }
+        }
+    ));
+    
+    passport.use('jwt', new JWTstrategy(opts, async (jwt_payload, done) => {
         try {
-            User.findOne({
-                    username
-                })
-                .then(user => {
-                    if (!user) {
-                        return done(null, false, {
-                            message: 'Invalid username'
-                        });
-                    } else {
-                        bcrypt.compare(password, user.password)
-                            .then(response => {
-                                if (!response) {
-                                    const msg = 'Invalid password';
-                                    console.log(msg);
-                                    return done(null, false, {
-                                        message: msg
-                                    });
-                                }
-
-                                console.log('User found and authenticated');
-                                return done(null, user);
-                            });
-                    }
-                });
+            const user = await User.findOne({ username: jwt_payload.username });
+            if (user) {
+                done(null, user);
+                return;
+            }
+            
+            done(null, false);
         } catch (err) {
             done(err);
         }
-    }
-));
+    }));
+    
+    passport.serializeUser(function (user, done) {
+        done(null, user);
+    });
+    
+    passport.deserializeUser(function (user, done) {
+        done(null, user);
+    });
 
-passport.use('jwt', new JWTstrategy(opts, (jwt_payload, done) => {
-    try {
-        User.findOne({
-                username: jwt_payload.username
-            })
-            .then(user => {
-                if (user) {
-                    console.log('User found in DB in passport');
-                    done(null, user);
-                } else {
-                    console.log('User not found in DB');
-                    done(null, false);
-                }
-            });
-    } catch (err) {
-        done(err);
-    }
-}));
+    return passport;
+};
 
-passport.serializeUser(function (user, done) {
-    done(null, user);
-});
-
-passport.deserializeUser(function (user, done) {
-    done(null, user);
-});
+module.exports = passportInit;

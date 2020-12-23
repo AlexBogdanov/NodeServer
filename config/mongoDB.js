@@ -4,8 +4,8 @@ const User = require('./../models/User');
 
 mongoose.Promise = global.Promise;
 
-const mongooseConfig = config => {
-    mongoose.connect(config.dbPath, {
+const mongooseConfig = dbPath => {
+    mongoose.connect(dbPath, {
         useNewUrlParser: true
     });
     const db = mongoose.connection;
@@ -26,4 +26,4 @@ const mongooseConfig = config => {
     });
 };
 
-module.exports = config => mongooseConfig(config);
+module.exports = mongooseConfig;

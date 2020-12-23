@@ -1,13 +1,28 @@
 const cloneOnly = (obj, properties) => {
     const newObj = {};
 
-    properties.forEach(property => {
-        if (property in obj) {
-            newObj[property] = obj[property];
+    properties.forEach(p => {
+        if (p in obj) {
+            newObj[p] = obj[p];
         }
     });
 
     return newObj;
 };
 
-module.exports = cloneOnly;
+const allExcept = (obj, properties) => {
+    const newObj = {};
+
+    Object.keys(obj)
+        .filter(p => !properties.includes(p))
+        .forEach(p => {
+            newObj[p] = obj[p];
+        });
+
+    return newObj;
+}
+
+module.exports = {
+    cloneOnly,
+    allExcept
+};
